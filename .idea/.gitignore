@@ -1,0 +1,7 @@
+# Default ignored files
+/../../Books /.idea/shelf/
+/../../Books /.idea/workspace.xml
+# Editor-based HTTP Client requests
+/../../Books /.idea/httpRequests/
+# Zeppelin ignored files
+/../../Books /.idea/ZeppelinRemoteNotebooks/
