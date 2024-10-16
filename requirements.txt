@@ -33,3 +33,5 @@ starlette==0.38.6
 typing_extensions==4.12.2
 uvicorn==0.31.0
 wheel==0.41.2
+pytest==6.2.5
+coverage==6.0.0
