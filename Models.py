@@ -41,3 +41,7 @@ class UserInResponse (BaseModel):
     disabled: Optional [bool] = None
     created_at: datetime
     updated_at: datetime
+
+
+class Base:
+    metadata = None

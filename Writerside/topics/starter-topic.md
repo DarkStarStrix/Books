@@ -1,6 +1,7 @@
 # Integration Testing in FastAPI Applications
 
-The logic of the integration tests with the code logic, let's break down the key parts of the integration tests in `Tests/API_Tests.py` and how they interact with the application logic in `main.py` and `auth.py`.
+let's break down the key parts of the integration tests in `Tests/API_Tests.py`
+and how they interact with the application logic in `main.py` and `auth.py`.
 
 ### How to write integration tests for FastAPI applications and backend services
 Integration tests for FastAPI applications and backend services can be written using the `TestClient` class provided by FastAPI. The `TestClient` class allows you to simulate HTTP requests to your application and verify the responses.
@@ -22,7 +23,13 @@ Here are the key steps to write integration tests for FastAPI applications:
 ### Database Setup and Dependency Override
 The test setup includes configuring a test database and overriding the `get_db` dependency to use this test database.
 
+To resolve the unresolved references, you need to import the necessary modules and objects. Here are the required changes:
+
 ```python
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from your_project.database import Base  # Adjust the import path as necessary
+
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -30,29 +37,19 @@ Base.metadata.create_all(bind=engine)
 ```
 
 ```python
-def override_get_db():
-    global db
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-```
+from fastapi.testclient import TestClient
+from your_project.main import app  # Adjust the import path as necessary
 
-### Test Client
-A test client is created to simulate requests to the FastAPI application.
-
-```python
 client = TestClient(app)
 ```
 
-### Helper Functions
-Helper functions are defined to create test users and send requests to the application.
-
 ```python
+from your_project.auth import get_password_hash  # Adjust the import path as necessary
+from your_project.models import User  # Adjust the import path as necessary
+
 def create_test_user(db):
     hashed_password = get_password_hash("testpassword")
-    db_user = User(username="testuser", email="testuser@example.com", full_name="Test User", disabled=False)
+    db_user = User(username="testuser", email="testuser@example.com", full_name="Test User", disabled=False, hashed_password=hashed_password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -60,24 +57,8 @@ def create_test_user(db):
 ```
 
 ```python
-def login_user(client, username, password):
-    response = client.post("/token", data={"username": username, "password": password})
-    return response
-```
+from your_project.dependencies import override_get_db  # Adjust the import path as necessary
 
-```python
-def register_user(client, username, password, email, full_name):
-    response = client.post("/register", json={"username": username, "password": password, "email": email, "full_name": full_name})
-    return response
-```
-
-### Test Functions
-Test functions are defined to verify different functionalities of the application.
-
-#### Successful Login
-This test verifies that a user can successfully log in and receive an access token.
-
-```python
 def login_for_access_token_success():
     db = next(override_get_db())
     create_test_user(db)
@@ -86,27 +67,11 @@ def login_for_access_token_success():
     assert "access_token" in response.json()
 ```
 
-#### Failed Login
-This test verifies that login fails with incorrect credentials.
-
-```python
-def login_for_access_token_failure():
-    response = login_user(client, "wronguser", "wrongpassword")
-    assert response.status_code == 401
-```
-
-#### Successful User Registration
-This test verifies that a new user can successfully register.
-
 ```python
 def register_user_success():
-    response = register_user(client, "newuser", "newpassword", "newuser@example.com", "New User")
-    assert response.status_code == 200
-    assert response.json()["username"] == "newuser"
+    db = next(override_get_db())
+    response = register_user(client, "testuser", "testpassword")
 ```
-
-#### Failed User Registration
-This test verifies that registration fails if the username already exists.
 
 ```python
 def register_user_failure():
@@ -116,25 +81,16 @@ def register_user_failure():
     assert response.status_code == 400
 ```
 
-#### Accessing Pages
-These tests verify that different pages can be accessed successfully.
-
 ```python
-def read_root_success():
-    response = home_page(client)
-    assert response.status_code == 200
+def read_root_success(client):
 ```
 
 ```python
-def login_page_success():
-    response = login_page(client)
-    assert response.status_code == 200
+def login_page_success(client):
 ```
 
 ```python
-def register_page_success():
-    response = register_page(client)
-    assert response.status_code == 200
+def register_page_success(client):
 ```
 
 These tests ensure that the application behaves correctly under various scenarios, such as successful and failed logins, user registration, and accessing different pages.
@@ -216,10 +172,10 @@ Ensuring that your application runs smoothly in production requires a multi-face
 
 ### 1. Code Coverage
 
-**Overview: **
+**Overview:**
 Code coverage measures the extent to which your tests cover the codebase, ensuring that critical paths, edge cases, and functionality are validated. High code coverage doesn’t necessarily guarantee a bug-free application, but it does provide confidence that most scenarios are accounted for.
 
-**Measuring Code Coverage: **
+**Measuring Code Coverage:**
 - Use tools like `coverage.py` (for Python) or `Jacoco` (for Java) to measure how much of your codebase is covered by tests.
 - Aim for a balanced coverage percentage (e.g., 80–90%). While 100% coverage is ideal, it may not always be practical.
 
@@ -227,12 +183,12 @@ Code coverage measures the extent to which your tests cover the codebase, ensuri
 - Prioritize testing the most critical parts of the codebase, such as API endpoints, authentication logic, and data processing components.
 - Regularly review code coverage reports and identify gaps.
 
-**Automating Code Coverage Reports: **
+**Automating Code Coverage Reports:**
 - Integrate code coverage tools into your CI/CD pipelines to automate the generation of reports whenever code is pushed.
 
 ### 2. Error Handling
 
-**Overview: **
+**Overview:**
 Effective error handling is crucial for building resilient applications that can recover gracefully from unexpected scenarios, such as invalid user input, network failures, or service outages.
 
 **Implementing Error Handling:**
@@ -240,34 +196,34 @@ Effective error handling is crucial for building resilient applications that can
 - **Specific vs. Generic Errors: ** Avoid catching all errors with generic handlers unless absolutely necessary. Instead, catch specific exceptions to provide more informative and actionable responses.
 - **Custom Error Messages: ** Provide meaningful error messages that describe what went wrong and, when appropriate, suggest solutions or corrective actions for the user.
 
-**Handling Edge Cases and Boundary Conditions: **
+**Handling Edge Cases and Boundary Conditions:**
 - Test and handle edge cases like null values, out-of-range inputs, and timeouts.
 - Validate inputs rigorously to prevent issues such as injection attacks or invalid data types from causing downstream errors.
 
 ### 3. Logging
 
-**Overview: **
+**Overview:**
 Logging is a critical aspect of maintaining visibility into your application’s behavior, especially in production environments. Proper logging allows you to track the state of your application, monitor for errors, and debug issues when they occur.
 
-**Types of Logs: **
-- **Info Logs: ** Provide general information about application events, such as API requests, successful transactions, or user login activities.
-- **Warning Logs: ** Indicate potentially problematic situations that may not require immediate action but could become issues later.
-- **Error Logs: ** Capture critical errors that impact the application’s functionality.
-- **Debug Logs: ** Offer detailed information about application state and variables, useful during development and troubleshooting.
+**Types of Logs:**
+- **Info Logs:** Provide general information about application events, such as API requests, successful transactions, or user login activities.
+- **Warning Logs:** Indicate potentially problematic situations that may not require immediate action but could become issues later.
+- **Error Logs:** Capture critical errors that impact the application’s functionality.
+- **Debug Logs:** Offer detailed information about application state and variables, useful during development and troubleshooting.
 
-**Best Practices for Logging: **
-- **Structured Logging: ** Use structured logging formats like JSON to make logs easier to parse and analyze.
+**Best Practices for Logging:**
+- **Structured Logging:** Use structured logging formats like JSON to make logs easier to parse and analyze.
 - **Log Levels: ** Implement log levels (e.g., DEBUG, INFO, WARNING, ERROR) to control the verbosity of logs in different environments.
-- **Avoid Sensitive Information: ** Ensure that logs do not contain sensitive information such as passwords, personal data, or API keys.
-- **Centralized Logging: ** Use centralized logging solutions to aggregate logs from different parts of your application.
+- **Avoid Sensitive Information:** Ensure that logs do not contain sensitive information such as passwords, personal data, or API keys.
+- **Centralized Logging:** Use centralized logging solutions to aggregate logs from different parts of your application.
 
 ### 4. Integrating Code Coverage, Error Handling, and Logging
 
-**Automated Monitoring and Alerts: **
+**Automated Monitoring and Alerts:**
 - Integrate code coverage reports and error logs into your CI/CD pipeline, and set up automated alerts for failed tests or critical errors.
 - Use monitoring tools like Prometheus combined with alerting systems like Alertmanager to detect anomalies in your application’s behavior.
 
-**Observability Across Environments: **
+**Observability Across Environments:**
 - Ensure that error handling and logging practices are consistent across both the dev and production environments.
 - Implement distributed tracing (e.g., Jaeger or Zipkin) in microservices environments to gain insight into how requests flow through your services.
 

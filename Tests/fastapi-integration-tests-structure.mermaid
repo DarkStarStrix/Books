@@ -1,0 +1,37 @@
+graph TD
+    A[Setup] --> B[Database Configuration]
+    A --> C[TestClient Setup]
+    A --> D[Dependency Override]
+    
+    B --> E[Test Database]
+    C --> F[Client Instance]
+    D --> G[Override get_db]
+    
+    H[Helper Functions] --> I[create_test_user]
+    H --> J[login_user]
+    H --> K[register_user]
+    H --> L[login_page]
+    H --> M[register_page]
+    H --> N[home_page]
+    
+    O[Test Functions] --> P[login_for_access_token_success]
+    O --> Q[login_for_access_token_failure]
+    O --> R[register_user_success]
+    O --> S[register_user_failure]
+    O --> T[read_root_success]
+    O --> U[login_page_success]
+    O --> V[register_page_success]
+    
+    E --> O
+    F --> O
+    G --> O
+    I --> O
+    J --> O
+    K --> O
+    L --> O
+    M --> O
+    N --> O
+
+    style A fill:#f9d5e5,stroke:#333,stroke-width:2px
+    style H fill:#eeac99,stroke:#333,stroke-width:2px
+    style O fill:#b5e7a0,stroke:#333,stroke-width:2px
