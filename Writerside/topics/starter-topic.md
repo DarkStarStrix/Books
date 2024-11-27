@@ -96,7 +96,7 @@ def register_page_success(client):
 These tests ensure that the application behaves correctly under various scenarios, such as successful and failed logins, user registration, and accessing different pages.
 Here is the structure of the integration test: 
 
-<img src="../../Tests/Integration.png" alt="Integration Test Structure" width="3840" height="1081" />
+<img src="../../Tests/Integration.png" alt="Integration Test Structure"/>
 
 
 ## Advanced tips and best practices for integration testing in FastAPI applications
