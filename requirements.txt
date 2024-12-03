@@ -22,7 +22,7 @@ pycparser==2.22
 pydantic==2.9.2
 pydantic_core==2.23.4
 python-jose==3.3.0
-python-multipart==0.0.12
+python-multipart==0.0.18
 rsa==4.9
 setuptools==75.1.0
 six==1.16.0
